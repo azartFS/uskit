@@ -68,6 +68,22 @@ export const CATALOG: AppItem[] = [
     iconUrl: icon("zoom", "2D8CFF"),
     category: "comm",
   },
+  {
+    id: "slack",
+    name: "Slack",
+    description: "Командный мессенджер для работы",
+    wingetId: "SlackTechnologies.Slack",
+    iconUrl: icon("slack", "4A154B"),
+    category: "comm",
+  },
+  {
+    id: "teams",
+    name: "Microsoft Teams",
+    description: "Чат, звонки и встречи",
+    wingetId: "Microsoft.Teams",
+    iconUrl: icon("microsoftteams", "6264A7"),
+    category: "comm",
+  },
 
   // ───── Игры ─────
   {
@@ -104,6 +120,22 @@ export const CATALOG: AppItem[] = [
     iconUrl: icon("battledotnet", "00AEFF"),
     category: "games",
   },
+  {
+    id: "eaapp",
+    name: "EA app",
+    description: "Лаунчер игр Electronic Arts",
+    wingetId: "ElectronicArts.EADesktop",
+    iconUrl: icon("ea", "FF4747"),
+    category: "games",
+  },
+  {
+    id: "ubisoft",
+    name: "Ubisoft Connect",
+    description: "Лаунчер игр Ubisoft",
+    wingetId: "Ubisoft.Connect",
+    iconUrl: icon("ubisoft", "ffffff"),
+    category: "games",
+  },
 
   // ───── Браузеры ─────
   {
@@ -138,6 +170,22 @@ export const CATALOG: AppItem[] = [
     description: "Браузер от Яндекса",
     wingetId: "Yandex.Browser",
     iconUrl: icon("yandex", "FFCC00"),
+    category: "browsers",
+  },
+  {
+    id: "opera",
+    name: "Opera",
+    description: "Браузер со встроенным VPN",
+    wingetId: "Opera.Opera",
+    iconUrl: icon("opera", "FF1B2D"),
+    category: "browsers",
+  },
+  {
+    id: "vivaldi",
+    name: "Vivaldi",
+    description: "Гибко настраиваемый браузер",
+    wingetId: "Vivaldi.Vivaldi",
+    iconUrl: icon("vivaldi", "EF3939"),
     category: "browsers",
   },
 
@@ -193,6 +241,38 @@ export const CATALOG: AppItem[] = [
     iconUrl: icon("notepadplusplus", "90E59A"),
     category: "utils",
   },
+  {
+    id: "powertoys",
+    name: "PowerToys",
+    description: "Набор системных утилит от Microsoft",
+    wingetId: "Microsoft.PowerToys",
+    iconUrl: icon("microsoft", "ffffff"),
+    category: "utils",
+  },
+  {
+    id: "everything",
+    name: "Everything",
+    description: "Мгновенный поиск файлов по имени",
+    wingetId: "voidtools.Everything",
+    iconUrl: icon("files", "ffffff"),
+    category: "utils",
+  },
+  {
+    id: "anydesk",
+    name: "AnyDesk",
+    description: "Удалённый доступ к рабочему столу",
+    wingetId: "AnyDeskSoftwareGmbH.AnyDesk",
+    iconUrl: icon("anydesk", "EF443B"),
+    category: "utils",
+  },
+  {
+    id: "winrar",
+    name: "WinRAR",
+    description: "Популярный архиватор",
+    wingetId: "RARLab.WinRAR",
+    iconUrl: icon("winrar", "ffffff"),
+    category: "utils",
+  },
 
   // ───── Разработка ─────
   {
@@ -244,6 +324,30 @@ export const CATALOG: AppItem[] = [
     iconUrl: icon("python", "3776AB"),
     category: "dev",
   },
+  {
+    id: "windows-terminal",
+    name: "Windows Terminal",
+    description: "Современный терминал для Windows",
+    wingetId: "Microsoft.WindowsTerminal",
+    iconUrl: icon("windowsterminal", "ffffff"),
+    category: "dev",
+  },
+  {
+    id: "github-desktop",
+    name: "GitHub Desktop",
+    description: "Git с графическим интерфейсом",
+    wingetId: "GitHub.GitHubDesktop",
+    iconUrl: icon("github", "ffffff"),
+    category: "dev",
+  },
+  {
+    id: "obsidian",
+    name: "Obsidian",
+    description: "Заметки и база знаний в Markdown",
+    wingetId: "Obsidian.Obsidian",
+    iconUrl: icon("obsidian", "7C3AED"),
+    category: "dev",
+  },
 ];
 
 export function appsByCategory(cat: Category): AppItem[] {
@@ -285,6 +389,12 @@ export const PRESETS: Preset[] = [
     label: "Стример",
     description: "OBS, Discord, Spotify, браузер",
     appIds: ["obs", "discord", "spotify", "chrome"],
+  },
+  {
+    id: "office",
+    label: "Офис",
+    description: "Связь, заметки, браузер для работы",
+    appIds: ["chrome", "slack", "teams", "zoom", "obsidian", "7zip"],
   },
 ];
 

@@ -6,8 +6,8 @@ Built for the moment after a fresh Windows install / new PC, when you need Steam
 
 ## Features
 
-- Catalog of ~25 popular apps in 5 categories (Связь / Игры / Браузеры / Утилиты / Разработка)
-- Presets ("Базовый", "Геймер", "Разработчик", "Стример") — select a whole group in one click
+- Catalog of ~37 popular apps in 5 categories (Связь / Игры / Браузеры / Утилиты / Разработка)
+- Presets ("Базовый", "Геймер", "Разработчик", "Стример", "Офис") — select a whole group in one click
 - Multi-select with floating install bar
 - Detection of already-installed packages (via `winget export`)
 - Sequential install queue with live log per card
