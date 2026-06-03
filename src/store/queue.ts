@@ -158,13 +158,17 @@ export const useQueue = create<QueueStore>((set, get) => ({
   clearSelection: () => set({ selection: new Set() }),
 
   setInstalled: (wingetIds) => {
-    const detected = new Set(wingetIds);
+    // winget Ids are case-insensitive; match accordingly and store the
+    // canonical catalog wingetId so all consumers compare consistently.
+    const detectedLower = new Set(wingetIds.map((w) => w.toLowerCase()));
     // Auto-mark catalog apps as success if they appear installed and we have no
     // active state for them (so card shows "Installed" green border).
     set((s) => {
       const items = { ...s.items };
+      const installed = new Set<string>();
       for (const app of CATALOG) {
-        if (detected.has(app.wingetId)) {
+        if (detectedLower.has(app.wingetId.toLowerCase())) {
+          installed.add(app.wingetId);
           const cur = items[app.id]?.status;
           if (!cur) {
             items[app.id] = {
@@ -174,7 +178,7 @@ export const useQueue = create<QueueStore>((set, get) => ({
           }
         }
       }
-      return { installed: detected, items };
+      return { installed, items };
     });
   },
 

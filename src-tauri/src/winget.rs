@@ -77,42 +77,72 @@ pub fn open_ms_store_app_installer(app: tauri::AppHandle) -> Result<(), String> 
         .map_err(|e| e.to_string())
 }
 
-#[tauri::command]
-pub async fn list_installed(app: tauri::AppHandle) -> Result<Vec<String>, String> {
-    let exe = match winget_executable(&app).await {
-        Some(p) => p,
-        None => return Ok(Vec::new()),
-    };
+/// Heuristic: does this whitespace-free token look like a winget PackageIdentifier?
+/// e.g. `Google.Chrome`, `Git.Git`, `Microsoft.VisualStudioCode`, `7zip.7zip`.
+/// We only use the result to test membership against our catalog, so a few
+/// false positives (e.g. a name token) are harmless. We exclude pure version
+/// strings like `120.0.6099` by requiring at least one ASCII letter.
+fn looks_like_winget_id(tok: &str) -> bool {
+    if tok.len() < 3 || !tok.contains('.') {
+        return false;
+    }
+    if !tok.chars().any(|c| c.is_ascii_alphabetic()) {
+        return false;
+    }
+    tok.chars()
+        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | '+'))
+}
 
+/// Parse `winget list` output, collecting everything that looks like a package Id.
+/// This is the most complete view of installed software — it includes apps
+/// installed outside winget that it can still map to an Id (Chrome, Git, ...),
+/// which `winget export` frequently omits.
+async fn list_installed_via_list(app: &tauri::AppHandle, exe: &str) -> Vec<String> {
+    let mut ids = Vec::new();
+    if let Ok(out) = app
+        .shell()
+        .command(exe.to_string())
+        .args(["list", "--accept-source-agreements"])
+        .output()
+        .await
+    {
+        let text = String::from_utf8_lossy(&out.stdout);
+        for line in text.lines() {
+            for tok in line.split_whitespace() {
+                if looks_like_winget_id(tok) {
+                    ids.push(tok.to_string());
+                }
+            }
+        }
+    }
+    ids
+}
+
+/// Parse `winget export` output as a secondary source.
+async fn list_installed_via_export(app: &tauri::AppHandle, exe: &str) -> Vec<String> {
     let tmp_dir = std::env::temp_dir();
     let tmp_path = tmp_dir.join(format!("uskit-export-{}.json", std::process::id()));
     let tmp_str = tmp_path.to_string_lossy().into_owned();
 
-    let result = app
-        .shell()
-        .command(exe)
-        .args([
-            "export",
-            "-o",
-            &tmp_str,
-            "--accept-source-agreements",
-        ])
-        .output()
-        .await
-        .map_err(|e| e.to_string())?;
-
     // winget export sometimes returns non-zero even when the file is written
     // (e.g. for packages without source). We ignore exit code and try to parse.
-    let _ = result;
+    let _ = app
+        .shell()
+        .command(exe.to_string())
+        .args(["export", "-o", &tmp_str, "--accept-source-agreements"])
+        .output()
+        .await;
 
     let raw = match std::fs::read_to_string(&tmp_path) {
         Ok(s) => s,
-        Err(e) => return Err(format!("read export: {e}")),
+        Err(_) => return Vec::new(),
     };
     let _ = std::fs::remove_file(&tmp_path);
 
-    let json: serde_json::Value =
-        serde_json::from_str(&raw).map_err(|e| format!("parse export: {e}"))?;
+    let json: serde_json::Value = match serde_json::from_str(&raw) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
 
     let mut ids = Vec::new();
     if let Some(sources) = json.get("Sources").and_then(|v| v.as_array()) {
@@ -126,6 +156,24 @@ pub async fn list_installed(app: tauri::AppHandle) -> Result<Vec<String>, String
             }
         }
     }
+    ids
+}
 
-    Ok(ids)
+#[tauri::command]
+pub async fn list_installed(app: tauri::AppHandle) -> Result<Vec<String>, String> {
+    let exe = match winget_executable(&app).await {
+        Some(p) => p,
+        None => return Ok(Vec::new()),
+    };
+
+    // Merge both sources; `winget list` is primary, `export` fills any gaps.
+    let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
+    for id in list_installed_via_list(&app, &exe).await {
+        seen.insert(id);
+    }
+    for id in list_installed_via_export(&app, &exe).await {
+        seen.insert(id);
+    }
+
+    Ok(seen.into_iter().collect())
 }
