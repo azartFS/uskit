@@ -12,6 +12,47 @@ export interface ItemState {
   message?: string | null;
 }
 
+interface PersistedSettings {
+  autoInstall: boolean;
+  downloadDir: string;
+}
+
+const SETTINGS_KEY = "uskit.settings";
+const DEFAULT_SETTINGS: PersistedSettings = {
+  autoInstall: true,
+  downloadDir: "",
+};
+
+function loadSettings(): PersistedSettings {
+  if (typeof window === "undefined") return { ...DEFAULT_SETTINGS };
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_KEY);
+    if (!raw) return { ...DEFAULT_SETTINGS };
+    const parsed = JSON.parse(raw) as Partial<PersistedSettings>;
+    return {
+      autoInstall:
+        typeof parsed.autoInstall === "boolean"
+          ? parsed.autoInstall
+          : DEFAULT_SETTINGS.autoInstall,
+      downloadDir:
+        typeof parsed.downloadDir === "string"
+          ? parsed.downloadDir
+          : DEFAULT_SETTINGS.downloadDir,
+    };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function saveSettings(settings: PersistedSettings): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    /* ignore quota / privacy-mode errors */
+  }
+}
+
 interface QueueStore {
   items: Record<string, ItemState>;
   installed: Set<string>;
@@ -26,6 +67,7 @@ interface QueueStore {
 
   toggleSelect: (id: string) => void;
   selectMany: (ids: string[]) => void;
+  deselectMany: (ids: string[]) => void;
   clearSelection: () => void;
 
   setInstalled: (wingetIds: string[]) => void;
@@ -46,10 +88,7 @@ export const useQueue = create<QueueStore>((set, get) => ({
   items: {},
   installed: new Set<string>(),
   selection: new Set<string>(),
-  settings: {
-    autoInstall: true,
-    downloadDir: "",
-  },
+  settings: loadSettings(),
 
   enqueue: async (id, wingetId) => {
     const cur = get().items[id]?.status;
@@ -106,6 +145,13 @@ export const useQueue = create<QueueStore>((set, get) => ({
     set((s) => {
       const next = new Set(s.selection);
       for (const id of ids) next.add(id);
+      return { selection: next };
+    }),
+
+  deselectMany: (ids) =>
+    set((s) => {
+      const next = new Set(s.selection);
+      for (const id of ids) next.delete(id);
       return { selection: next };
     }),
 
@@ -171,10 +217,18 @@ export const useQueue = create<QueueStore>((set, get) => ({
   },
 
   setAutoInstall: (v) =>
-    set((s) => ({ settings: { ...s.settings, autoInstall: v } })),
+    set((s) => {
+      const settings = { ...s.settings, autoInstall: v };
+      saveSettings(settings);
+      return { settings };
+    }),
 
   setDownloadDir: (v) =>
-    set((s) => ({ settings: { ...s.settings, downloadDir: v } })),
+    set((s) => {
+      const settings = { ...s.settings, downloadDir: v };
+      saveSettings(settings);
+      return { settings };
+    }),
 
   reset: (id) =>
     set((s) => {

@@ -81,7 +81,13 @@ export default function App() {
         installedCount={installedCount}
       />
       <div className="flex flex-1 overflow-hidden">
-        <CategoryNav view={view} onSelect={setView} />
+        <CategoryNav
+          view={view}
+          onSelect={(v) => {
+            setView(v);
+            setQuery("");
+          }}
+        />
         <main className="flex-1 overflow-y-auto p-6 pb-24">
           <Content view={view} query={query} />
         </main>
@@ -152,6 +158,18 @@ function Content({ view, query }: { view: View; query: string }) {
   }, [query]);
 
   if (filtered) {
+    if (filtered.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-2 py-24 text-center">
+          <div className="text-sm text-[var(--color-muted)]">
+            По запросу «{query.trim()}» ничего не найдено
+          </div>
+          <div className="text-xs text-[var(--color-muted)]">
+            Попробуйте другое название или winget ID
+          </div>
+        </div>
+      );
+    }
     return <CategoryGrid title={`Поиск: ${query}`} apps={filtered} />;
   }
   if (view === "settings") return <Settings />;

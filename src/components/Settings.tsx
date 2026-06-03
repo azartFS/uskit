@@ -1,13 +1,49 @@
+import { useState } from "react";
 import { useQueue } from "../store/queue";
+import { listInstalled } from "../lib/tauri";
 
 export function Settings() {
   const settings = useQueue((s) => s.settings);
   const setAutoInstall = useQueue((s) => s.setAutoInstall);
   const setDownloadDir = useQueue((s) => s.setDownloadDir);
+  const setInstalled = useQueue((s) => s.setInstalled);
+  const installedCount = useQueue((s) => s.installed.size);
+  const [scanning, setScanning] = useState(false);
+
+  const rescan = async () => {
+    if (scanning) return;
+    setScanning(true);
+    try {
+      const ids = await listInstalled();
+      setInstalled(ids);
+    } catch {
+      /* non-fatal: keep previous state */
+    } finally {
+      setScanning(false);
+    }
+  };
 
   return (
     <div className="flex max-w-xl flex-col gap-6">
       <h2 className="text-lg font-semibold tracking-tight">Настройки</h2>
+
+      <Row
+        title="Установленные приложения"
+        hint="Пересканировать систему (winget export), чтобы отметить уже установленные приложения зелёной рамкой."
+      >
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={rescan}
+            disabled={scanning}
+            className="rounded-md border border-[var(--color-border)] px-3 py-2 text-sm hover:bg-[var(--color-surface-2)] disabled:opacity-40"
+          >
+            {scanning ? "Сканирую…" : "Обновить"}
+          </button>
+          <span className="text-[11px] text-[var(--color-muted)]">
+            Найдено: {installedCount}
+          </span>
+        </div>
+      </Row>
 
       <Row
         title="Автоматически устанавливать"
